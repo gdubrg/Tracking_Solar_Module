@@ -1,0 +1,56 @@
+import processing.serial.*;
+import cc.arduino.*;
+import eeml.*;
+
+Arduino arduino;
+Serial myPort;
+DataOut myDataOut;
+
+float voltage_ard = 0.0;
+float voltage_real = 0;
+float alfa = (1006 + 1010 + 1008 + 990) / 990;
+int count;
+float avg;
+
+void setup() {
+  arduino = new Arduino(this, Arduino.list()[0], 57600);
+    myDataOut = new DataOut(this, "YOUR_COSM_ID", "YOUR_API_KEY"); 
+  myDataOut.addData(0,"Solar Module");
+}
+
+void draw() {
+  if(count == 6){
+    avg = avg/count;
+    println("*****************************");
+    println("Average Voltage: " + avg); 
+    println("*****************************");   
+    myDataOut.update(0, avg);
+    avg = 0;
+    count = 0;
+    println(myDataOut.updatePachube());
+    if (myDataOut.updatePachube() == 200){
+       println("Uploaded successfully");}
+    if (myDataOut.updatePachube() == 401){
+       println("Unauthorized");}
+    if (myDataOut.updatePachube() == 404){
+       println("Not Found");}
+       if (myDataOut.updatePachube() == 422){
+       println("Error 422");}
+    if (myDataOut.updatePachube() == 401){
+       println("Error 401");}
+  }
+  else{
+    count++;
+    voltage_ard = arduino.analogRead(0); 
+    println("----------------------------");
+    println("Arduino voltage " + "["+count+"]: " + voltage_ard);
+    voltage_ard = voltage_ard*5/1024;
+    voltage_real = voltage_ard*alfa;
+    println("Real voltage " + "["+count+"]: " + voltage_real);
+    println("----------------------------");
+    avg = avg + voltage_real;
+    if(count != 6)
+      delay(10000);
+  }
+
+}
